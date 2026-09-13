@@ -1,0 +1,43 @@
+name: Auto Sync & Keep Alive
+
+on:
+  schedule:
+    # 每天凌晨 2 点同步上游代码（UTC 时间）
+    - cron: '0 2 * * *'
+    # 每月 1 号凌晨 3 点执行保活操作（UTC 时间）
+    - cron: '0 3 1 * *'
+
+jobs:
+  sync-and-keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/pdone/lx-music-source.git
+
+      - name: Fetch upstream changes
+        run: git fetch upstream
+
+      - name: Merge upstream main branch
+        run: |
+          git checkout main
+          git merge upstream/main --no-edit || echo "No new commits to merge"
+
+      - name: Push changes to origin
+        run: git push origin main
+
+      - name: Keep alive (optional: touch a file to trigger Pages rebuild)
+        run: |
+          echo "Keep alive at $(date)" >> keepalive.txt
+          git add keepalive.txt
+          git commit -m "Monthly keep alive" || echo "No changes to commit"
+          git push origin main
