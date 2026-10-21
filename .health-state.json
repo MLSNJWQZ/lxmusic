@@ -8,8 +8,8 @@
     "last_status": "异常"
   },
   "88.lxmusic.xn--fiqs8s": {
-    "consecutive_failures": 4,
-    "last_status": "失效"
+    "consecutive_failures": 0,
+    "last_status": "异常"
   },
   "anymatch.kuwo.cn": {
     "consecutive_failures": 0,
