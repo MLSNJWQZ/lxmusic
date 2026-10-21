@@ -37,9 +37,17 @@ jobs:
           if git merge upstream/main --no-edit; then
             echo "Merged upstream/main"
           else
-            git merge --abort || true
-            echo "::error::合并上游失败：存在冲突，需要手动处理（本地 pull upstream 后解决冲突再推）"
-            exit 1
+            # .health-state.json 和 README.md 是自动生成文件，本地与上游两边机器人都会写，
+            # 冲突时直接以上游为准，避免每天撞车失败
+            git checkout --theirs .health-state.json README.md 2>/dev/null || true
+            git add .health-state.json README.md 2>/dev/null || true
+            if git diff --name-only --diff-filter=U | grep -q .; then
+              git merge --abort || true
+              echo "::error::合并上游失败：存在非自动生成文件的冲突，需手动处理"
+              exit 1
+            fi
+            git commit --no-edit
+            echo "Merged upstream/main（自动生成文件冲突已按上游解决）"
           fi
 
       - name: Push changes to origin
