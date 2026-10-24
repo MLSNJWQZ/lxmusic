@@ -64,8 +64,8 @@
     "last_status": "异常"
   },
   "music-api.gdstudio.xyz": {
-    "consecutive_failures": 0,
-    "last_status": "可用"
+    "consecutive_failures": 1,
+    "last_status": "异常"
   },
   "music-dl.sayqz.com": {
     "consecutive_failures": 11,
