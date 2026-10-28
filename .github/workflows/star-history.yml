@@ -25,7 +25,7 @@ jobs:
     steps:
       # 第一步：从 main 分支取出脚本（脚本本身存在仓库里）
       - name: Checkout main for scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 1
