@@ -195,27 +195,9 @@ https://ghproxy.net/raw.githubusercontent.com/pdone/lx-music-source/main/yuningx
 
 ## 音源可用性
 
-<!-- HEALTH-CHECK:START -->
-| 音源 | 状态 |
-| --- | --- |
-| [changqing](#changqing) | 🟢 可用 |
-| [fish](#fish) | 🟢 可用 |
-| [helloworld](#helloworld) | 🟢 可用 |
-| [hyw](#hyw) | 🟢 可用 |
-| [jiexiang](#jiexiang) | 🟢 可用 |
-| [juhe](#juhe) | 🟢 可用 |
-| [lx](#lx) | 🟢 可用 |
-| [qdy](#qdy) | 🟢 可用 |
-| [xinghai](#xinghai) | 🟢 可用 |
-| [yuningxi](#yuningxi) | 🟢 可用 |
-| [huanyin](#huanyin) | 🟡 异常 |
-| [huibq](#huibq) | 🟡 异常 |
-| [flower](#flower) | 🔴 失效 |
-| [grass](#grass) | 🔴 失效 |
-| [ikun](#ikun) | 🔴 失效 |
+<img alt="音源可用性检测结果" src="https://raw.githubusercontent.com/pdone/lx-music-source/health-status/status.svg" />
 
-检测时间：2026-10-29 12:22（北京时间）
-<!-- HEALTH-CHECK:END -->
+每日 01:00（北京时间）检测一次；仅在检测状态发生变化时更新图片，报告与探测状态存放于 `health-status` 分支。
 
 ## 数据来源
 - [SixYin](https://www.sixyin.com/)
