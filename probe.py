@@ -97,16 +97,13 @@ SVG_DOT_X = 228
 SVG_STATUS_X = 244
 SVG_FONT = ("-apple-system, BlinkMacSystemFont, 'Segoe UI', "
             "'Noto Sans SC', 'Microsoft YaHei', sans-serif")
-SVG_INK = '#1f2328'
-SVG_MUTED = '#59636e'
-SVG_RULE = '#d1d9e0'
-STATUS_FILL = {
-    STATUS_OK: '#2da44e',
-    STATUS_WARN: '#bf8700',
-    STATUS_DEAD: '#cf222e',
-    STATUS_UNKNOWN: '#8250df',
+# 状态圆点对应的 CSS 类（配色写在 <style> 里，浅色/深色各一套）
+STATUS_CLASS = {
+    STATUS_OK: 'ok',
+    STATUS_WARN: 'warn',
+    STATUS_DEAD: 'dead',
+    STATUS_UNKNOWN: 'na',
 }
-SVG_FILL_FALLBACK = STATUS_FILL[STATUS_UNKNOWN]
 
 
 def extract_hosts(text):
@@ -258,19 +255,47 @@ def render_time_line(updated_at):
     return '状态更新于：{}（北京时间）'.format(updated_at)
 
 
-def _svg_text(x, y, content, size=13, weight='400', fill=SVG_INK):
-    """生成一个 SVG text 元素（内容按 XML 规则转义）。"""
-    return ('  <text x="{}" y="{}" font-family="{}" font-size="{}" font-weight="{}" '
-            'fill="{}">{}</text>').format(
-                x, y, SVG_FONT, size, weight, fill, xml_escape(content))
+def _svg_style():
+    """返回内嵌样式：浅色为默认配色，深色由 prefers-color-scheme 覆盖。
+
+    配色与排版取值与仓库内的 Star History 图（star-history.svg）保持一致，
+    使两张图在同一页面下观感统一。
+    """
+    return '\n'.join([
+        '<style>',
+        '  .bg{fill:#ffffff}',
+        '  .rule{stroke:#e5e7eb;stroke-width:1}',
+        '  .fg{fill:#111827}',
+        '  .muted{fill:#6b7280}',
+        '  .fg,.muted{font-family:' + SVG_FONT + '}',
+        '  .h{font-size:15px;font-weight:600}',
+        '  .cell{font-size:13px;font-weight:400}',
+        '  .foot{font-size:12px;font-weight:400}',
+        '  .ok{fill:#1a7f37}.warn{fill:#9a6700}.dead{fill:#cf222e}.na{fill:#8250df}',
+        '  @media (prefers-color-scheme: dark){',
+        '    .bg{fill:#0d1117}',
+        '    .rule{stroke:#21262d}',
+        '    .fg{fill:#c9d1d9}',
+        '    .muted{fill:#8b949e}',
+        '    .ok{fill:#3fb950}.warn{fill:#d29922}.dead{fill:#f85149}.na{fill:#a371f7}',
+        '  }',
+        '</style>',
+    ])
+
+
+def _svg_text(x, y, content, classes):
+    """生成一个 SVG text 元素（内容按 XML 规则转义，样式由 class 提供）。"""
+    return '  <text class="{}" x="{}" y="{}">{}</text>'.format(
+        classes, x, y, xml_escape(content))
 
 
 def render_svg(rows, updated_at):
     """把聚合后的结果渲染为 SVG 报告文本。
 
-    布局：不透明底色 + 表头 + 每音源一行（音源名 / 状态圆点 / 状态文字）
+    布局：底色 + 表头 + 每音源一行（音源名 / 状态圆点 / 状态文字）
     + 底部的状态更新时刻。状态以 <circle> 绘制，报告不含 emoji 字符，
-    也不含任何超链接（音源名不可点击）。
+    也不含任何超链接（音源名不可点击）。底色与文字颜色由内嵌样式决定，
+    在深色主题下自动切换为 GitHub 深色画布配色。
     """
     height = SVG_HEAD_H + SVG_ROW_H * len(rows) + SVG_FOOT_H
     desc = '共 {} 个音源的状态检测结果，状态更新于 {}（北京时间）'.format(len(rows), updated_at)
@@ -280,23 +305,25 @@ def render_svg(rows, updated_at):
          ).format(SVG_WIDTH, height),
         '  <title id="health-title">音源可用性</title>',
         '  <desc id="health-desc">{}</desc>'.format(xml_escape(desc)),
-        '  <rect width="{}" height="{}" fill="#ffffff"/>'.format(SVG_WIDTH, height),
-        _svg_text(SVG_NAME_X, 28, '音源', 15, '600'),
-        _svg_text(SVG_DOT_X, 28, '状态', 15, '600'),
-        '  <line x1="{}" y1="38" x2="{}" y2="38" stroke="{}" stroke-width="1"/>'.format(
-            SVG_NAME_X, SVG_WIDTH - SVG_NAME_X, SVG_RULE),
+        _svg_style(),
+        '  <rect class="bg" width="{}" height="{}"/>'.format(SVG_WIDTH, height),
+        _svg_text(SVG_NAME_X, 28, '音源', 'fg h'),
+        _svg_text(SVG_DOT_X, 28, '状态', 'fg h'),
+        '  <line class="rule" x1="{}" y1="38" x2="{}" y2="38"/>'.format(
+            SVG_NAME_X, SVG_WIDTH - SVG_NAME_X),
     ]
     for index, row in enumerate(rows):
         baseline = SVG_HEAD_H + index * SVG_ROW_H + 17
-        parts.append(_svg_text(SVG_NAME_X, baseline, row['source']))
-        parts.append('  <circle cx="{}" cy="{}" r="5" fill="{}"/>'.format(
-            SVG_DOT_X, baseline - 4, STATUS_FILL.get(row['status'], SVG_FILL_FALLBACK)))
-        parts.append(_svg_text(SVG_STATUS_X, baseline, row['status']))
+        parts.append(_svg_text(SVG_NAME_X, baseline, row['source'], 'fg cell'))
+        parts.append('  <circle class="dot {}" cx="{}" cy="{}" r="5"/>'.format(
+            STATUS_CLASS.get(row['status'], 'na'), SVG_DOT_X, baseline - 4))
+        parts.append(_svg_text(SVG_STATUS_X, baseline, row['status'], 'fg cell'))
     foot_y = SVG_HEAD_H + SVG_ROW_H * len(rows)
-    parts.append('  <line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="1"/>'.format(
-        SVG_NAME_X, foot_y, SVG_WIDTH - SVG_NAME_X, foot_y, SVG_RULE))
+    parts.append('  <line class="rule" x1="{}" y1="{}" x2="{}" y2="{}"/>'.format(
+        SVG_NAME_X, foot_y, SVG_WIDTH - SVG_NAME_X, foot_y))
     parts.append(_svg_text(
-        SVG_NAME_X, foot_y + 20, '状态更新于 {}（北京时间）'.format(updated_at), 12, '400', SVG_MUTED))
+        SVG_NAME_X, foot_y + 20,
+        '状态更新于 {}（北京时间）'.format(updated_at), 'muted foot'))
     parts.append('</svg>')
     return '\n'.join(parts) + '\n'
 
