@@ -40,6 +40,8 @@ jobs:
           # 克隆当前仓库到工作目录（浅克隆）
           rm -rf repo && cp -r main-src repo
           cd repo
+          # 显式带上 token：否则 fetch 失败会被 || true 吞掉，误判成「首次创建」把历史冲掉
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           # 清空工作区，准备作为 orphan 分支
           git checkout --orphan star-history 2>/dev/null || git checkout star-history
           # 尝试拉取远程 star-history 分支（首次不存在会失败，忽略）
@@ -76,10 +78,15 @@ jobs:
 
       # 第五步：提交并推送到 star-history 分支
       - name: Commit and push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd "$GITHUB_WORKSPACE/repo"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # repo 是 cp -r 复制出来的，凭据不保证跟着过来（实测 checkout 的凭据不一定写进 .git/config，
+          # 表现为 fatal: could not read Username）。这里显式把 token 写进 remote，避免依赖隐式凭据。
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add history.json star-history.svg 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
