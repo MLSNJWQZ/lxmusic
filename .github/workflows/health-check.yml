@@ -5,13 +5,31 @@ on:
     # UTC 17:00 = 北京时间每天 01:00
     - cron: '0 17 * * *'
   workflow_dispatch:
+  # 音源增删或更新后立即重算表格，避免等到下一次定时任务。
+  # 刻意不含 README.md / .health-state.json：机器人提交只改这两个文件，
+  # 不在触发路径内，因此不会自我循环。
+  push:
+    branches: [main]
+    paths:
+      # 任一首源的版本文件或 latest.js 发生变化
+      - '*/*.js'
+      - 'CreateLatest.py'
+      - 'probe.py'
+      - '.github/workflows/health-check.yml'
 
 permissions:
   contents: write
 
+# 同一时间只跑一轮，避免定时任务与推送触发的实例互相覆盖提交
+concurrency:
+  group: health-check
+  cancel-in-progress: false
+
 jobs:
   health-check:
     runs-on: ubuntu-latest
+    # 聚合音源（如 jiexiang）链路较多，预留充足时间
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 

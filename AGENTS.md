@@ -4,14 +4,22 @@
 
 ## 项目结构
 
-- `sixyin/` - 六音源
-- `huibq/` - Huibq 源
+- `changqing/` - 长青 SVIP 音源
+- `fish/` - fish_music 音源
 - `flower/` - 野花源
-- `lx/` - 洛雪官方源
-- `ikun/` - ikun 源
 - `grass/` - Grass 源
+- `helloworld/` - hello world 聚合音源
+- `huanyin/` - 幻音音源
+- `huibq/` - Huibq 源
+- `hyw/` - HYWmusic 公益版
+- `ikun/` - ikun 源
+- `jiexiang/` - 杰翔聚合音源
 - `juhe/` - 聚合 API 源
+- `lx/` - 洛雪官方源
+- `qdy/` - 全豆要聚合音源
+- `sixyin/` - 六音源
 - `xinghai/` - 星海源
+- `yuningxi/` - lx-玉宁熙-Pro 音源
 - `CreateLatest.py` - 更新 latest.js 的脚本
 
 ## 命令
