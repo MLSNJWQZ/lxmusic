@@ -46,10 +46,14 @@ jobs:
 
       # 第二步：准备数据分支工作副本；分支不存在则建 orphan 分支
       - name: Prepare data branch worktree
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           rm -rf "$GITHUB_WORKSPACE/data"
           cp -r "$GITHUB_WORKSPACE/main-src" "$GITHUB_WORKSPACE/data"
           cd "$GITHUB_WORKSPACE/data"
+          # 同上：不带 token 的话 fetch 会失败，被 2>/dev/null 吞掉后误建 orphan 分支、冲掉历史
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git fetch origin "$DATA_BRANCH" 2>/dev/null && git rev-parse --verify FETCH_HEAD >/dev/null 2>&1; then
@@ -80,8 +84,13 @@ jobs:
 
       # 第五步：仅在报告或状态确实变化时提交并推送到数据分支
       - name: Commit and push only on change
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd "$GITHUB_WORKSPACE/data"
+          # 显式绑定 token：checkout 的隐式凭据不一定写进 .git/config（实测 v7 下 push 报
+          # fatal: could not read Username），data 目录是独立 checkout 的，更容易丢。
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           cp "$RUNNER_TEMP/$DATA_SVG_FILE" "$DATA_SVG_FILE"
           cp "$GITHUB_WORKSPACE/main-src/.health-state.json" "$DATA_STATE_FILE"
           git add "$DATA_SVG_FILE" "$DATA_STATE_FILE"
